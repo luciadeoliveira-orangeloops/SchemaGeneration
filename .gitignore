@@ -1,6 +1,11 @@
 # Environment variables (contains sensitive data)
 .env
 
+# Generated schemas and context packs (except examples)
+schema/
+context/
+!context/context-pack.example.json
+
 # Python
 __pycache__/
 *.py[cod]
@@ -58,3 +63,7 @@ yarn-error.log*
 # Temporary files
 *.tmp
 *.temp
+
+# Test outputs and intermediate files
+figma-*.json
+test_*.json
