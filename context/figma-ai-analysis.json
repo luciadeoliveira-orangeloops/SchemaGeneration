@@ -1,0 +1,170 @@
+{
+  "entities": [
+    {
+      "name": "User",
+      "attributes": [
+        {
+          "name": "id",
+          "type": "integer",
+          "tags": [
+            "pk"
+          ],
+          "description": "Primary key for user"
+        },
+        {
+          "name": "email",
+          "type": "string",
+          "tags": [
+            "required",
+            "unique"
+          ],
+          "description": "User email for login"
+        },
+        {
+          "name": "password",
+          "type": "string",
+          "tags": [
+            "required"
+          ],
+          "description": "User password hash"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "tags": [],
+          "description": "Full name of the user"
+        },
+        {
+          "name": "role",
+          "type": "string",
+          "tags": [],
+          "description": "Role of the user in the application"
+        }
+      ],
+      "sources": [
+        "figma:Inicio de Sesion",
+        "figma:Crear cuenta",
+        "figma:Usuarios"
+      ],
+      "ui_context": "Login and registration screens",
+      "confidence": 0.9
+    },
+    {
+      "name": "Project",
+      "attributes": [
+        {
+          "name": "id",
+          "type": "integer",
+          "tags": [
+            "pk"
+          ],
+          "description": "Primary key for project"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "tags": [
+            "required"
+          ],
+          "description": "Name of the project"
+        },
+        {
+          "name": "description",
+          "type": "text",
+          "tags": [],
+          "description": "Detailed description of the project"
+        },
+        {
+          "name": "created_at",
+          "type": "datetime",
+          "tags": [],
+          "description": "Timestamp when the project was created"
+        },
+        {
+          "name": "updated_at",
+          "type": "datetime",
+          "tags": [],
+          "description": "Timestamp when the project was last updated"
+        },
+        {
+          "name": "user_id",
+          "type": "integer",
+          "tags": [
+            "fk"
+          ],
+          "description": "Foreign key to the user who owns this project"
+        }
+      ],
+      "sources": [
+        "figma:Proyectos",
+        "figma:Crear Proyecto"
+      ],
+      "ui_context": "Project management and creation screens",
+      "confidence": 0.9
+    },
+    {
+      "name": "Session",
+      "attributes": [
+        {
+          "name": "id",
+          "type": "string",
+          "tags": [
+            "pk"
+          ],
+          "description": "Primary key for user session"
+        },
+        {
+          "name": "user_id",
+          "type": "integer",
+          "tags": [
+            "fk"
+          ],
+          "description": "Foreign key to the user associated with this session"
+        },
+        {
+          "name": "token",
+          "type": "string",
+          "tags": [
+            "required"
+          ],
+          "description": "Session token for user authentication"
+        },
+        {
+          "name": "expires_at",
+          "type": "datetime",
+          "tags": [
+            "required"
+          ],
+          "description": "Expiration time for the session"
+        }
+      ],
+      "sources": [
+        "figma:Inicio de Sesion"
+      ],
+      "ui_context": "User session management",
+      "confidence": 0.85
+    }
+  ],
+  "relationships": [
+    {
+      "from_entity": "User",
+      "to_entity": "Project",
+      "relationship_type": "one_to_many",
+      "description": "Users can have multiple projects",
+      "confidence": 0.8
+    },
+    {
+      "from_entity": "User",
+      "to_entity": "Session",
+      "relationship_type": "one_to_many",
+      "description": "Users can have multiple active sessions",
+      "confidence": 0.75
+    }
+  ],
+  "analysis_notes": [
+    "Analysis based on Figma component names suggesting a typical web application with user management and projects.",
+    "Inferred common attributes for each entity based on typical application patterns.",
+    "High confidence in identifying User and Project entities due to explicit mentions and standard functionalities like login, registration, and project creation.",
+    "Session entity inferred from login and authentication context."
+  ]
+}

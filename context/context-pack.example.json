@@ -1,0 +1,91 @@
+{
+  "figma": {
+    "entityCards": [
+      {
+        "name": "User",
+        "attributes": [
+          {"name": "id", "tags": ["pk"]},
+          {"name": "email", "tags": ["unique"]},
+          {"name": "name", "tags": []},
+          {"name": "createdAt", "tags": []}
+        ],
+        "sources": ["figma:node123"]
+      },
+      {
+        "name": "Order",
+        "attributes": [
+          {"name": "id", "tags": ["pk"]},
+          {"name": "userId", "tags": []},
+          {"name": "total", "tags": []},
+          {"name": "status", "tags": []}
+        ],
+        "sources": ["figma:node456"]
+      },
+      {
+        "name": "Product",
+        "attributes": [
+          {"name": "id", "tags": ["pk"]},
+          {"name": "name", "tags": []},
+          {"name": "price", "tags": []},
+          {"name": "description", "tags": []}
+        ],
+        "sources": ["figma:node789"]
+      }
+    ],
+    "connectors": [
+      {
+        "from": "Order",
+        "to": "User",
+        "label": "N:1",
+        "sources": ["figma:edge42"]
+      },
+      {
+        "from": "OrderItem",
+        "to": "Order",
+        "label": "N:1",
+        "sources": ["figma:edge43"]
+      },
+      {
+        "from": "OrderItem",
+        "to": "Product",
+        "label": "N:1",
+        "sources": ["figma:edge44"]
+      }
+    ],
+    "sources": ["figma:file:example"]
+  },
+  "documents": {
+    "glossary": [
+      {
+        "term": "User",
+        "definition": "A person who can place orders in the system",
+        "aliases": ["Customer", "Account"]
+      },
+      {
+        "term": "Order",
+        "definition": "A purchase request containing one or more products",
+        "aliases": ["Purchase"]
+      }
+    ],
+    "rules": [
+      {
+        "kind": "cardinality",
+        "from": "Order",
+        "to": "User",
+        "type": "many-to-one",
+        "sources": ["doc:spec#4.2"]
+      }
+    ],
+    "enums": [
+      {
+        "name": "OrderStatus",
+        "values": ["pending", "paid", "shipped", "cancelled"],
+        "sources": ["doc:api#status"]
+      }
+    ]
+  },
+  "meta": {
+    "source": "example",
+    "generated_at": "2025-09-29T00:00:00Z"
+  }
+}

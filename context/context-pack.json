@@ -1,0 +1,146 @@
+{
+  "figma": {
+    "entityCards": [
+      {
+        "name": "User",
+        "attributes": [
+          {
+            "name": "id",
+            "tags": [
+              "pk"
+            ]
+          },
+          {
+            "name": "email",
+            "tags": [
+              "required",
+              "unique"
+            ]
+          },
+          {
+            "name": "password",
+            "tags": [
+              "required"
+            ]
+          },
+          {
+            "name": "name",
+            "tags": []
+          },
+          {
+            "name": "role",
+            "tags": []
+          }
+        ],
+        "sources": [
+          "figma:Inicio de Sesion",
+          "figma:Crear cuenta",
+          "figma:Usuarios"
+        ]
+      },
+      {
+        "name": "Project",
+        "attributes": [
+          {
+            "name": "id",
+            "tags": [
+              "pk"
+            ]
+          },
+          {
+            "name": "name",
+            "tags": [
+              "required"
+            ]
+          },
+          {
+            "name": "description",
+            "tags": []
+          },
+          {
+            "name": "created_at",
+            "tags": []
+          },
+          {
+            "name": "updated_at",
+            "tags": []
+          },
+          {
+            "name": "user_id",
+            "tags": [
+              "fk"
+            ]
+          }
+        ],
+        "sources": [
+          "figma:Proyectos",
+          "figma:Crear Proyecto"
+        ]
+      },
+      {
+        "name": "Session",
+        "attributes": [
+          {
+            "name": "id",
+            "tags": [
+              "pk"
+            ]
+          },
+          {
+            "name": "user_id",
+            "tags": [
+              "fk"
+            ]
+          },
+          {
+            "name": "token",
+            "tags": [
+              "required"
+            ]
+          },
+          {
+            "name": "expires_at",
+            "tags": [
+              "required"
+            ]
+          }
+        ],
+        "sources": [
+          "figma:Inicio de Sesion"
+        ]
+      }
+    ],
+    "connectors": [
+      {
+        "from": "User",
+        "to": "Project",
+        "label": "1:N",
+        "sources": [
+          "ai_analysis:User-Project"
+        ]
+      },
+      {
+        "from": "User",
+        "to": "Session",
+        "label": "1:N",
+        "sources": [
+          "ai_analysis:User-Session"
+        ]
+      }
+    ],
+    "sources": [
+      "figma:ai_analysis"
+    ]
+  },
+  "documents": {
+    "glossary": [],
+    "rules": [],
+    "enums": []
+  },
+  "meta": {
+    "source": "figma_ai_analysis",
+    "generated_at": "2025-09-29T13:30:47.605640Z",
+    "entities_count": 3,
+    "relationships_count": 2
+  }
+}
