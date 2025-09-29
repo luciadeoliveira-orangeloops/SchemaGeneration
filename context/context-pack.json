@@ -24,18 +24,16 @@
             ]
           },
           {
-            "name": "name",
-            "tags": []
-          },
-          {
-            "name": "role",
-            "tags": []
+            "name": "reset_token",
+            "tags": [
+              "optional"
+            ]
           }
         ],
         "sources": [
           "figma:Inicio de Sesion",
           "figma:Crear cuenta",
-          "figma:Usuarios"
+          "figma:Olvido Contraseña"
         ]
       },
       {
@@ -48,6 +46,12 @@
             ]
           },
           {
+            "name": "user_id",
+            "tags": [
+              "fk"
+            ]
+          },
+          {
             "name": "name",
             "tags": [
               "required"
@@ -56,57 +60,10 @@
           {
             "name": "description",
             "tags": []
-          },
-          {
-            "name": "created_at",
-            "tags": []
-          },
-          {
-            "name": "updated_at",
-            "tags": []
-          },
-          {
-            "name": "user_id",
-            "tags": [
-              "fk"
-            ]
           }
         ],
         "sources": [
-          "figma:Proyectos",
-          "figma:Crear Proyecto"
-        ]
-      },
-      {
-        "name": "Session",
-        "attributes": [
-          {
-            "name": "id",
-            "tags": [
-              "pk"
-            ]
-          },
-          {
-            "name": "user_id",
-            "tags": [
-              "fk"
-            ]
-          },
-          {
-            "name": "token",
-            "tags": [
-              "required"
-            ]
-          },
-          {
-            "name": "expires_at",
-            "tags": [
-              "required"
-            ]
-          }
-        ],
-        "sources": [
-          "figma:Inicio de Sesion"
+          "figma:Proyectos"
         ]
       }
     ],
@@ -121,10 +78,18 @@
       },
       {
         "from": "User",
+        "to": "Project",
+        "label": "1:N",
+        "sources": [
+          "doc:schema_definitions.json"
+        ]
+      },
+      {
+        "from": "User",
         "to": "Session",
         "label": "1:N",
         "sources": [
-          "ai_analysis:User-Session"
+          "doc:schema_definitions.json"
         ]
       }
     ],
@@ -133,14 +98,598 @@
     ]
   },
   "documents": {
-    "glossary": [],
-    "rules": [],
-    "enums": []
+    "glossary": [
+      {
+        "term": "Las funcionalidades clave identificadas son",
+        "definition": "Input estructurado de datos del evento: ubicación, duración, público estimado, proveedores contratados, tipo de producción, entre otros.",
+        "aliases": [],
+        "sources": [
+          "doc:discovery.docx"
+        ]
+      },
+      {
+        "term": "Modelado de entradas y salidas del sistema",
+        "definition": "siguiendo una visión sistémica, se identifican flujos de materiales, energía, personas y servicios, considerando su impacto en distintas dimensiones.",
+        "aliases": [],
+        "sources": [
+          "doc:discovery.docx"
+        ]
+      },
+      {
+        "term": "Interfaz amigable",
+        "definition": "orientada a usuarios no técnicos que puedan completar inputs con facilidad.",
+        "aliases": [],
+        "sources": [
+          "doc:discovery.docx"
+        ]
+      },
+      {
+        "term": "Escalabilidad",
+        "definition": "si bien se inicia en Uruguay, debe contemplarse una arquitectura que permita escalar regionalmente.",
+        "aliases": [],
+        "sources": [
+          "doc:discovery.docx"
+        ]
+      },
+      {
+        "term": "Privacidad y seguridad de datos",
+        "definition": "dado el tipo de organizaciones usuarias, será clave permitir control granular sobre la exposición de datos y opciones de despliegue (cloud u on-premise, eventualmente).",
+        "aliases": [],
+        "sources": [
+          "doc:discovery.docx"
+        ]
+      },
+      {
+        "term": "El valor para los usuarios radica en",
+        "definition": "Disponer de una herramienta que mejore la transparencia de sus acciones.",
+        "aliases": [],
+        "sources": [
+          "doc:discovery.docx"
+        ]
+      },
+      {
+        "term": "Subsecciones por evento",
+        "definition": "Información general: nombre, lugar, fechas, responsables, tipo de evento.",
+        "aliases": [],
+        "sources": [
+          "doc:discovery.docx"
+        ]
+      },
+      {
+        "term": "Estado del evento",
+        "definition": "planificación / en ejecución / realizado.",
+        "aliases": [],
+        "sources": [
+          "doc:discovery.docx"
+        ]
+      },
+      {
+        "term": "Recursos utilizados",
+        "definition": "materiales, energía, agua, transporte (inputs clave).",
+        "aliases": [],
+        "sources": [
+          "doc:discovery.docx"
+        ]
+      },
+      {
+        "term": "Proveedores contratados",
+        "definition": "con posibilidad de clasificarlos (locales, sostenibles, etc.).",
+        "aliases": [],
+        "sources": [
+          "doc:discovery.docx"
+        ]
+      },
+      {
+        "term": "Participantes y audiencias",
+        "definition": "cantidad, perfil, accesibilidad.",
+        "aliases": [],
+        "sources": [
+          "doc:discovery.docx"
+        ]
+      },
+      {
+        "term": "Aspectos sociales",
+        "definition": "empleo generado, prácticas de inclusión, vínculos comunitarios.",
+        "aliases": [],
+        "sources": [
+          "doc:discovery.docx"
+        ]
+      },
+      {
+        "term": "Impacto Ambiental",
+        "definition": "huella de carbono, consumo energético, generación de residuos.",
+        "aliases": [],
+        "sources": [
+          "doc:discovery.docx"
+        ]
+      },
+      {
+        "term": "Impacto Social",
+        "definition": "inclusión, empleo, accesibilidad, comunidad.",
+        "aliases": [],
+        "sources": [
+          "doc:discovery.docx"
+        ]
+      },
+      {
+        "term": "Comparativas",
+        "definition": "evolución con eventos anteriores o benchmark entre eventos similares.",
+        "aliases": [],
+        "sources": [
+          "doc:discovery.docx"
+        ]
+      },
+      {
+        "term": "Ficha de proveedor",
+        "definition": "Nombre, datos de contacto.",
+        "aliases": [],
+        "sources": [
+          "doc:discovery.docx"
+        ]
+      },
+      {
+        "term": "Reconocimiento a proveedores destacados",
+        "definition": "“Proveedor Vira recomendado” (basado en puntajes + validación del equipo).",
+        "aliases": [],
+        "sources": [
+          "doc:discovery.docx"
+        ]
+      },
+      {
+        "term": "E S T A D O",
+        "definition": "A B I E R T O",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Est ado",
+        "definition": "Abier t oDat os car gados: 40%",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Est ado",
+        "definition": "Cerr adoDat os car gados: 100%",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Est ado",
+        "definition": "Abier t oDat os car gados: 40%",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Est ado",
+        "definition": "Cerr adoDat os car gados: 100%",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Est ado",
+        "definition": "Abier t oDat os car gados: 40%",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Est ado",
+        "definition": "Cerr adoDat os car gados: 100%",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Est ado",
+        "definition": "Abier t o V ir aje 2 7 %",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Est ado",
+        "definition": "Cerr adoV ir aje - 5%",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Est ado",
+        "definition": "Abier t o V ir aje 25%",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Est ado",
+        "definition": "Abier t oDat os car gados: 40%",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Est ado",
+        "definition": "Cerr adoDat os car gados: 100%",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Est ado",
+        "definition": "Abier t o􀆈ResumenDat osRepor t esSimuladorRecomendacionesConfigur aciónV ir aje 25%",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Est ado",
+        "definition": "Abier t o􀆈Resumen",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Est ado",
+        "definition": "Abier t oDat os car gados: 40%",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Est ado",
+        "definition": "Cerr adoDat os car gados: 100%",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Est ado",
+        "definition": "Abier t o􀆈ResumenDat os",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Descar gar Repor t esFiltr ar por M ar co",
+        "definition": "GRIA CA UODS",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Est ado",
+        "definition": "Abier t oDat os car gados: 40%",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Est ado",
+        "definition": "Cerr adoDat os car gados: 100%",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Est ado",
+        "definition": "Abier t o􀆈ResumenDat osRepor t es",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Est ado",
+        "definition": "Abier t oDat os car gados: 40%",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Est ado",
+        "definition": "Cerr adoDat os car gados: 100%",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Est ado",
+        "definition": "Abier t o􀆈ResumenDat osRepor t esSimuladorRecomendacionesConfigur aciónRecomendacionesEner gía r eno v ableO pt ar por pr o v eedor es q ue tr aba j en con ener g í a solar o eólica no solo r educe significativ ament e la h uella de carbono de tu e v ent o ,  sino q ue t ambi é n env í a un mensa j e clar o de compr omiso",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Est ado",
+        "definition": "Abier t o􀆈ResumenDat osRepor t esSimuladorRecomendaciones",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "D at os par a el t est",
+        "definition": "􀈒 Borr ar Dat osDesde19/05/25􀉉H ast a20/05/25􀉉L ocación:",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Ener V er deIndustria",
+        "definition": "􀋦ener gía􀋃􀋃􀋃􀋃􀋂4.0(60)www . ener v er de. comEnerV er de es una empr esa colombiana especializada en el diseño ,  inst alación y",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "EcoRut aIndustria",
+        "definition": "􀝉T r anspor t e􀋃􀋃􀋃􀋂􀋂3 .0(60)www . ecorut a. comEcoRut a ofr ece soluciones de mo vilidad sost enible mediant e flot as de v ehículos",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "So l ar N o v aIndustria",
+        "definition": "􀋦ener gía􀋃􀋃􀋃􀋃􀋂4. 7  ( 11 2)www .solarno v a. comS olarNo v a implement a micr or edes solar es par a z onas rur ales desconect adas",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "M o vilZ er oIndustria",
+        "definition": "􀝉T r anspor t e􀋃􀋃􀋃􀋂􀋂3 7  ( 11 2)www .mo vilz er o . comM o vil Z er o es una plat af orma de mo vilidad urbana q ue ofr ece sist emas de",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "F oodtruc kIndustria",
+        "definition": "􀝉T r anspor t e􀋃􀋃􀋃􀋂􀋂40 ( 8 0)www .f oodtruckuruguay . comM o vil Z er o es una plat af orma de mo vilidad urbana q ue ofr ece sist emas de",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "T u plan actual",
+        "definition": "Licencia Full",
+        "aliases": [],
+        "sources": [
+          "doc:wireframes.pdf"
+        ]
+      },
+      {
+        "term": "Authentication",
+        "definition": "The process of verifying a user's identity through credentials like email and password",
+        "aliases": [
+          "Login",
+          "Sign-in"
+        ],
+        "sources": [
+          "doc:schema_definitions.json"
+        ]
+      },
+      {
+        "term": "Authorization",
+        "definition": "The process of determining what actions a user is allowed to perform",
+        "aliases": [
+          "Permissions",
+          "Access Control"
+        ],
+        "sources": [
+          "doc:schema_definitions.json"
+        ]
+      },
+      {
+        "term": "Componentes incluidos",
+        "definition": "• Gestión de Eventos/Proyectos",
+        "aliases": [],
+        "sources": [
+          "doc:requirements.pdf"
+        ]
+      },
+      {
+        "term": "Componentes incluidos",
+        "definition": "• Simulador de Impacto Ambiental",
+        "aliases": [],
+        "sources": [
+          "doc:requirements.pdf"
+        ]
+      },
+      {
+        "term": "Componentes incluidos",
+        "definition": "• Notificaciones",
+        "aliases": [],
+        "sources": [
+          "doc:requirements.pdf"
+        ]
+      },
+      {
+        "term": "Ventajas",
+        "definition": "• Alta precisión y confiabilidad",
+        "aliases": [],
+        "sources": [
+          "doc:requirements.pdf"
+        ]
+      },
+      {
+        "term": "Desventajas",
+        "definition": "• Dependencia de servicios externos",
+        "aliases": [],
+        "sources": [
+          "doc:requirements.pdf"
+        ]
+      },
+      {
+        "term": "Ventajas",
+        "definition": "• Gratuitas y reutilizables",
+        "aliases": [],
+        "sources": [
+          "doc:requirements.pdf"
+        ]
+      },
+      {
+        "term": "Desventajas",
+        "definition": "• Poca documentación en algunos casos",
+        "aliases": [],
+        "sources": [
+          "doc:requirements.pdf"
+        ]
+      },
+      {
+        "term": "Ventajas",
+        "definition": "• Control completo sobre el modelo de cálculo",
+        "aliases": [],
+        "sources": [
+          "doc:requirements.pdf"
+        ]
+      },
+      {
+        "term": "Desventajas",
+        "definition": "• Mayor esfuerzo inicial de implementación",
+        "aliases": [],
+        "sources": [
+          "doc:requirements.pdf"
+        ]
+      },
+      {
+        "term": "VIRA",
+        "definition": "Links Wireframes",
+        "aliases": [],
+        "sources": [
+          "doc:links.txt"
+        ]
+      },
+      {
+        "term": "Prototipo Interactivo Figma\nhttps",
+        "definition": "//www.figma.com/proto/9pHPi5rkYz9ij5gKmI6BXK/Hi-Fi-Wireframes?page-id=2%3A249&node-id=551-7912&p=f&viewport=-1477%2C-1136%2C0.25&t=PN7gane8oIxqlX64-1&scaling=scale-down&content-scaling=fixed&starting-point-node-id=551%3A7912&show-proto-sidebar=1",
+        "aliases": [],
+        "sources": [
+          "doc:links.txt"
+        ]
+      },
+      {
+        "term": "Workbook Figma\nhttps",
+        "definition": "//www.figma.com/design/9pHPi5rkYz9ij5gKmI6BXK/Hi-Fi-Wireframes?node-id=2-249&t=MueFR1DWjix179Rx-1",
+        "aliases": [],
+        "sources": [
+          "doc:links.txt"
+        ]
+      },
+      {
+        "term": "Precio",
+        "definition": "valor monetario que se le asigna al producto. Debe ser coherente con el posicionamiento. ● Puede ser accesible, premium, psicológico, competitivo o promocional.  Plaza (distribución): cómo se entrega el producto. Incluye canales físicos (locales, supermercados) o digitales (e-commerce, apps), y decisiones logísticas. Promoción: cómo se comunica el producto al público. Incluye publicidad, redes sociales, influencers, marketing de contenido, descuentos, etc. Todas las P deben estar alineadas con el público objetivo y el posicionamiento buscado.  3. Segmentación y Posicionamiento Segmentación es dividir el mercado en grupos de personas con características comunes para atenderlos mejor. Los principales criterios son: ● Geográficos: región, clima  ● Demográficos: edad, género, ingresos  ● Psicográficos: valores, estilo de vida  ● Conductuales: hábitos de compra, frecuencia de uso  Posicionamiento es el lugar que la marca quiere ocupar en la mente del consumidor. Se construye a través de todas las decisiones de marketing y debe ser: ● Importante, diferente, superior, comunicable, costeable y rentable.  Ejemplo clásico: Volvo se posiciona como la marca más segura.  4. Marketing Relacional Es un enfoque que busca no solo atraer clientes, sino mantenerlos a largo plazo. Se basa en construir relaciones basadas en la confianza, la satisfacción y el compromiso.",
+        "aliases": [],
+        "sources": [
+          "doc:parcial2.pdf"
+        ]
+      },
+      {
+        "term": "Se diferencia del marketing tradicional en que",
+        "definition": "● No busca cerrar una venta, sino mantener un vínculo continuo.  ● Invierte más en fidelización que en captación.  ● Utiliza herramientas como CRM, atención personalizada, programas de fidelidad y marketing directo.  Este modelo es clave en la actualidad, ya que retener a un cliente suele ser más rentable que captar uno nuevo.  5. Valor Percibido Es lo que el cliente cree que está recibiendo en relación a lo que entrega. No depende del precio real, sino de cómo lo interpreta el cliente. Ejemplo: una persona puede pagar más por un producto natural si considera que eso le aporta bienestar o tranquilidad, aunque haya otros más baratos. El marketing debe trabajar para que el cliente perciba un valor alto, más allá del costo.  6. Evolución del enfoque del marketing A lo largo del tiempo, el marketing fue cambiando su forma de pensar: ● Producción: foco en fabricar mucho y barato.  ● Producto: se vendía solo si era de buena calidad.  ● Ventas: había que convencer al cliente.  ● Marketing moderno: se parte del cliente, se analiza lo que necesita.  ● Marketing relacional: se busca una relación estable y rentable con el cliente.  Hoy en día, el enfoque más efectivo es el relacional, apoyado por herramientas digitales que permiten personalización y comunicación directa.",
+        "aliases": [],
+        "sources": [
+          "doc:parcial2.pdf"
+        ]
+      },
+      {
+        "term": "Ejemplo",
+        "definition": "en vez de construir toda una app, mostrar cómo funcionaría mediante una simulación.  Pivotar Si lo que se construyó no cumple las expectativas o no valida el problema del cliente, se debe pivotar. Es decir, cambiar parcialmente la idea, manteniendo la visión original. Pivotar no es fracasar, sino ajustar el rumbo antes de gastar más recursos.  Medición basada en aprendizaje Lean Startup no mide solo ventas o clics, sino aprendizaje validado: si el experimento permitió entender algo real del mercado o de los clientes. Esto se apoya en métricas accionables (que orientan decisiones), en vez de métricas de vanidad (como seguidores o visitas sin impacto real).  Ventajas del enfoque Lean ● Ahorra tiempo y dinero.  ● Reduce el riesgo de fracaso.  ● Permite adaptarse a los cambios del mercado.  ● Enfoca los esfuerzos en lo que realmente quiere el cliente.  ● Favorece la innovación continua.  Aplicación en startups y empresas Si bien fue pensado para emprendimientos, el modelo también se aplica a empresas tradicionales que desean lanzar nuevos productos o explorar ideas innovadoras. Es útil en cualquier contexto donde se necesita validar hipótesis de negocio rápidamente.",
+        "aliases": [],
+        "sources": [
+          "doc:parcial2.pdf"
+        ]
+      }
+    ],
+    "rules": [
+      {
+        "kind": "cardinality",
+        "description": "Each user can have multiple projects, but each project belongs to exactly one user",
+        "from": "User",
+        "to": "Project",
+        "type": "one-to-many",
+        "sources": [
+          "doc:schema_definitions.json"
+        ]
+      },
+      {
+        "kind": "cardinality",
+        "description": "A user can have multiple active sessions (different devices)",
+        "from": "User",
+        "to": "Session",
+        "type": "one-to-many",
+        "sources": [
+          "doc:schema_definitions.json"
+        ]
+      }
+    ],
+    "enums": [
+      {
+        "name": "UserRole",
+        "values": [
+          "admin",
+          "user",
+          "guest"
+        ],
+        "sources": [
+          "doc:schema_definitions.json"
+        ]
+      },
+      {
+        "name": "ProjectPriority",
+        "values": [
+          "low",
+          "medium",
+          "high",
+          "urgent"
+        ],
+        "sources": [
+          "doc:schema_definitions.json"
+        ]
+      }
+    ],
+    "sources": []
   },
   "meta": {
-    "source": "figma_ai_analysis",
-    "generated_at": "2025-09-29T13:30:47.605640Z",
-    "entities_count": 3,
-    "relationships_count": 2
+    "source": "figma_ai_analysis_with_docs",
+    "generated_at": "2025-09-29T14:10:05.427242Z",
+    "entities_count": 2,
+    "relationships_count": 3,
+    "docs_terms": 66,
+    "docs_rules": 2,
+    "docs_enums": 2
   }
 }

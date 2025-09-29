@@ -1,0 +1,40 @@
+{
+  "glossary": [
+    {
+      "term": "Authentication",
+      "definition": "The process of verifying a user's identity through credentials like email and password",
+      "aliases": ["Login", "Sign-in"]
+    },
+    {
+      "term": "Authorization", 
+      "definition": "The process of determining what actions a user is allowed to perform",
+      "aliases": ["Permissions", "Access Control"]
+    }
+  ],
+  "rules": [
+    {
+      "kind": "cardinality",
+      "from": "User",
+      "to": "Project", 
+      "type": "one-to-many",
+      "description": "Each user can have multiple projects, but each project belongs to exactly one user"
+    },
+    {
+      "kind": "cardinality",
+      "from": "User",
+      "to": "Session",
+      "type": "one-to-many", 
+      "description": "A user can have multiple active sessions (different devices)"
+    }
+  ],
+  "enums": [
+    {
+      "name": "UserRole",
+      "values": ["admin", "user", "guest"]
+    },
+    {
+      "name": "ProjectPriority",
+      "values": ["low", "medium", "high", "urgent"]
+    }
+  ]
+}

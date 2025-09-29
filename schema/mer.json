@@ -2,19 +2,19 @@
   "entities": [
     {
       "name": "User",
-      "description": "Account/person that authenticates (login, account creation) and is managed via the Usuarios screen.",
-      "aliases": [
-        "Usuarios (UI)"
-      ],
+      "description": "Registered account used for authentication and authorization; can own projects and have multiple sessions.",
+      "aliases": [],
       "sources": [
         "figma:Inicio de Sesion",
         "figma:Crear cuenta",
-        "figma:Usuarios",
+        "figma:Olvido Contraseña",
+        "doc:schema_definitions.json",
         "figma:Inicio de Sesion",
         "figma:Crear cuenta",
-        "figma:Usuarios"
+        "figma:Olvido Contraseña",
+        "doc:schema_definitions.json"
       ],
-      "confidence": 0.9,
+      "confidence": 0.95,
       "attributes": [
         {
           "name": "id",
@@ -24,9 +24,9 @@
           "sources": [
             "figma:Inicio de Sesion",
             "figma:Crear cuenta",
-            "figma:Usuarios"
+            "figma:Olvido Contraseña"
           ],
-          "confidence": 0.62
+          "confidence": 0.78
         },
         {
           "name": "email",
@@ -36,9 +36,9 @@
           "sources": [
             "figma:Inicio de Sesion",
             "figma:Crear cuenta",
-            "figma:Usuarios"
+            "figma:Olvido Contraseña"
           ],
-          "confidence": 0.9
+          "confidence": 0.92
         },
         {
           "name": "password",
@@ -46,122 +46,84 @@
           "nullable": false,
           "sources": [
             "figma:Inicio de Sesion",
-            "figma:Crear cuenta",
-            "figma:Usuarios"
+            "figma:Crear cuenta"
+          ],
+          "confidence": 0.9
+        },
+        {
+          "name": "resettoken",
+          "type": "string",
+          "nullable": true,
+          "sources": [
+            "figma:Olvido Contraseña",
+            "figma:Inicio de Sesion",
+            "figma:Crear cuenta"
+          ],
+          "confidence": 0.75
+        }
+      ]
+    },
+    {
+      "name": "Project",
+      "description": "Project managed in the system that belongs to exactly one user.",
+      "aliases": [],
+      "sources": [
+        "figma:Proyectos",
+        "doc:schema_definitions.json",
+        "figma:Proyectos",
+        "doc:schema_definitions.json"
+      ],
+      "confidence": 0.9,
+      "attributes": [
+        {
+          "name": "id",
+          "type": "string",
+          "pk": true,
+          "nullable": false,
+          "sources": [
+            "figma:Proyectos"
+          ],
+          "confidence": 0.75
+        },
+        {
+          "name": "userid",
+          "type": "string",
+          "nullable": false,
+          "sources": [
+            "figma:Proyectos",
+            "doc:schema_definitions.json"
           ],
           "confidence": 0.8
         },
         {
           "name": "name",
           "type": "string",
-          "nullable": true,
-          "sources": [
-            "figma:Usuarios"
-          ],
-          "confidence": 0.6
-        },
-        {
-          "name": "role",
-          "type": "string",
-          "nullable": true,
-          "sources": [
-            "figma:Usuarios"
-          ],
-          "confidence": 0.55
-        }
-      ]
-    },
-    {
-      "name": "Project",
-      "description": "Project record managed via Proyectos and Crear Proyecto screens; associated to a user.",
-      "aliases": [
-        "Proyectos (UI)"
-      ],
-      "sources": [
-        "figma:Proyectos",
-        "figma:Crear Proyecto",
-        "ai_analysis:User-Project",
-        "figma:Proyectos",
-        "figma:Crear Proyecto"
-      ],
-      "confidence": 0.86,
-      "attributes": [
-        {
-          "name": "id",
-          "type": "string",
-          "pk": true,
           "nullable": false,
           "sources": [
-            "figma:Proyectos",
-            "figma:Crear Proyecto"
+            "figma:Proyectos"
           ],
-          "confidence": 0.6
-        },
-        {
-          "name": "name",
-          "type": "string",
-          "nullable": false,
-          "sources": [
-            "figma:Proyectos",
-            "figma:Crear Proyecto"
-          ],
-          "confidence": 0.75
+          "confidence": 0.85
         },
         {
           "name": "description",
-          "type": "string",
+          "type": "text",
           "nullable": true,
           "sources": [
-            "figma:Proyectos",
-            "figma:Crear Proyecto"
+            "figma:Proyectos"
           ],
-          "confidence": 0.55
-        },
-        {
-          "name": "createdat",
-          "type": "datetime",
-          "nullable": true,
-          "sources": [
-            "figma:Proyectos",
-            "figma:Crear Proyecto"
-          ],
-          "confidence": 0.65
-        },
-        {
-          "name": "updatedat",
-          "type": "datetime",
-          "nullable": true,
-          "sources": [
-            "figma:Proyectos",
-            "figma:Crear Proyecto"
-          ],
-          "confidence": 0.65
-        },
-        {
-          "name": "userid",
-          "type": "string",
-          "nullable": false,
-          "sources": [
-            "figma:Proyectos",
-            "figma:Crear Proyecto",
-            "ai_analysis:User-Project"
-          ],
-          "confidence": 0.7
+          "confidence": 0.6
         }
       ]
     },
     {
       "name": "Session",
-      "description": "Authentication session with token and expiry tied to a user; part of the login flow.",
-      "aliases": [
-        "Inicio de Sesion (UI)"
-      ],
+      "description": "Authentication session for a user; a user can have multiple active sessions (e.g., across devices).",
+      "aliases": [],
       "sources": [
-        "figma:Inicio de Sesion",
-        "ai_analysis:User-Session",
-        "figma:Inicio de Sesion"
+        "doc:schema_definitions.json",
+        "doc:schema_definitions.json"
       ],
-      "confidence": 0.84,
+      "confidence": 0.8,
       "attributes": [
         {
           "name": "id",
@@ -169,37 +131,18 @@
           "pk": true,
           "nullable": false,
           "sources": [
-            "figma:Inicio de Sesion"
+            "doc:schema_definitions.json"
           ],
-          "confidence": 0.6
+          "confidence": 0.5
         },
         {
           "name": "userid",
           "type": "string",
           "nullable": false,
           "sources": [
-            "figma:Inicio de Sesion",
-            "ai_analysis:User-Session"
+            "doc:schema_definitions.json"
           ],
-          "confidence": 0.7
-        },
-        {
-          "name": "token",
-          "type": "string",
-          "nullable": false,
-          "sources": [
-            "figma:Inicio de Sesion"
-          ],
-          "confidence": 0.7
-        },
-        {
-          "name": "expiresat",
-          "type": "datetime",
-          "nullable": false,
-          "sources": [
-            "figma:Inicio de Sesion"
-          ],
-          "confidence": 0.7
+          "confidence": 0.55
         }
       ]
     }
@@ -214,15 +157,15 @@
         "ref": "User.id"
       },
       "mandatory": {
-        "from": false,
+        "from": true,
         "to": false
       },
       "sources": [
+        "doc:schema_definitions.json",
         "figma:Proyectos",
-        "figma:Crear Proyecto",
         "ai_analysis:User-Project"
       ],
-      "confidence": 0.83
+      "confidence": 0.95
     },
     {
       "from": "Session",
@@ -233,91 +176,134 @@
         "ref": "User.id"
       },
       "mandatory": {
-        "from": false,
+        "from": true,
         "to": false
       },
       "sources": [
-        "figma:Inicio de Sesion",
-        "ai_analysis:User-Session"
+        "doc:schema_definitions.json"
       ],
-      "confidence": 0.8
+      "confidence": 0.9
     }
   ],
-  "enums": [],
+  "enums": [
+    {
+      "name": "UserRole",
+      "values": [
+        "admin",
+        "user",
+        "guest"
+      ],
+      "sources": [
+        "doc:schema_definitions.json"
+      ]
+    },
+    {
+      "name": "ProjectPriority",
+      "values": [
+        "low",
+        "medium",
+        "high",
+        "urgent"
+      ],
+      "sources": [
+        "doc:schema_definitions.json"
+      ]
+    }
+  ],
   "meta": {
     "generation_time": null,
     "open_questions": [
       {
-        "question": "Confirm the primary key type for all entities (string used as placeholder). Should ids be uuid, bigint, or cuid per entity (User, Project, Session)?",
+        "question": "Should Event be modeled as a distinct entity from Project, or are Events and Projects the same concept in this domain?",
         "sources": [
-          "figma:Inicio de Sesion",
-          "figma:Crear cuenta",
-          "figma:Usuarios",
-          "figma:Proyectos",
-          "figma:Crear Proyecto"
-        ]
-      },
-      {
-        "question": "Are Project.userId and Session.userId strictly required (NOT NULL) due to 1:N relationships to User, or can they be nullable?",
-        "sources": [
-          "figma:Proyectos",
-          "figma:Crear Proyecto",
-          "figma:Inicio de Sesion",
-          "ai_analysis:User-Project",
-          "ai_analysis:User-Session"
-        ]
-      },
-      {
-        "question": "Are Project.createdAt and Project.updatedAt system-generated with default current timestamp and non-null? Should they be marked derived or view_only?",
-        "sources": [
-          "figma:Proyectos",
-          "figma:Crear Proyecto"
-        ]
-      },
-      {
-        "question": "Should User.password store a hashed value (e.g., passwordHash) instead of raw password? Any constraints (min length, complexity)?",
-        "sources": [
-          "figma:Crear cuenta",
-          "figma:Inicio de Sesion",
-          "figma:Usuarios"
-        ]
-      },
-      {
-        "question": "Should Session.token be unique to prevent duplicates? Any expected format/length?",
-        "sources": [
-          "figma:Inicio de Sesion"
-        ]
-      },
-      {
-        "question": "What are the allowed values for User.role (e.g., admin, user)? Is role required or optional? Consider modeling as an enum.",
-        "sources": [
-          "figma:Usuarios"
-        ]
-      },
-      {
-        "question": "What is the expected length/format for Project.description? Should it be modeled as text if long content is expected?",
-        "sources": [
-          "figma:Crear Proyecto",
+          "doc:requirements.pdf",
+          "doc:discovery.docx",
           "figma:Proyectos"
         ]
       },
       {
-        "question": "Are Project.userId and Session.userId strictly required (NOT NULL), making the participation from Project/Session to User mandatory?",
+        "question": "Should Provider (Supplier) be a first-class entity (e.g., with a provider profile and classifications)?",
         "sources": [
-          "figma:Proyectos",
-          "figma:Crear Proyecto",
-          "figma:Inicio de Sesion",
-          "ai_analysis:User-Project",
-          "ai_analysis:User-Session"
+          "doc:discovery.docx"
         ]
       },
       {
-        "question": "Can a User exist without any Project or Session? If not, should the 'to' side (User) participation be marked mandatory for either relationship?",
+        "question": "Should Notifications be modeled as a domain entity?",
         "sources": [
-          "ai_analysis:User-Project",
-          "ai_analysis:User-Session",
-          "figma:Usuarios"
+          "doc:requirements.pdf"
         ]
+      },
+      {
+        "question": "Confirm the identifier types for all entities (uuid, cuid, or string) and naming conventions for IDs.",
+        "sources": [
+          "figma:Inicio de Sesion",
+          "figma:Crear cuenta",
+          "figma:Olvido Contraseña",
+          "figma:Proyectos",
+          "doc:schema_definitions.json"
+        ],
+        "confidence": 0.48
+      },
+      {
+        "question": "What attributes should Session include beyond id and userId (e.g., token, createdAt, expiresAt, userAgent, ipAddress)?",
+        "sources": [
+          "doc:schema_definitions.json"
+        ],
+        "confidence": 0.45
+      },
+      {
+        "question": "Should User include a role attribute referencing the UserRole enum (admin, user, guest)?",
+        "sources": [
+          "doc:schema_definitions.json"
+        ],
+        "confidence": 0.52
+      },
+      {
+        "question": "Should Project include a priority attribute referencing the ProjectPriority enum (low, medium, high, urgent)?",
+        "sources": [
+          "doc:schema_definitions.json"
+        ],
+        "confidence": 0.52
+      },
+      {
+        "question": "Confirm the preferred naming convention for foreign keys: use camelCase (userId) instead of snake_case (user_id) as seen in Figma cards.",
+        "sources": [
+          "figma:Proyectos",
+          "figma:Inicio de Sesion",
+          "figma:Crear cuenta",
+          "figma:Olvido Contraseña"
+        ],
+        "confidence": 0.64
+      },
+      {
+        "question": "Should Project.description be modeled as text (unbounded) or string (length-limited)?",
+        "sources": [
+          "figma:Proyectos"
+        ],
+        "confidence": 0.58
+      },
+      {
+        "question": "Should Event be modeled as a distinct entity from Project, or are Events and Projects the same concept in this domain?",
+        "sources": [
+          "doc:requirements.pdf",
+          "doc:discovery.docx",
+          "figma:Proyectos"
+        ],
+        "confidence": 0.5
+      },
+      {
+        "question": "Should Provider (Supplier) be a first-class entity (e.g., with a provider profile and classifications)?",
+        "sources": [
+          "doc:discovery.docx"
+        ],
+        "confidence": 0.6
+      },
+      {
+        "question": "Should Notifications be modeled as a domain entity?",
+        "sources": [
+          "doc:requirements.pdf"
+        ],
+        "confidence": 0.55
       }
     ]
   }

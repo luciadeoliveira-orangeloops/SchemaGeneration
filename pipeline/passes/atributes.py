@@ -17,6 +17,42 @@ def run_attributes(context_pack: Dict[str, Any], base_mer: Dict[str, Any], run_m
     print(f"🔄 [ATTRIBUTES] Prompt built, calling LLM...")
     out = run_model(prompt)
     print(f"🔄 [ATTRIBUTES] LLM response received, parsing JSON...")
-    result = json.loads(out)
-    print(f"🔄 [ATTRIBUTES] Attributes pass completed successfully")
-    return result
+    
+    # Handle empty responses from LLM
+    if not out or out.strip() == "":
+        print(f"⚠️ [ATTRIBUTES] Empty response from LLM, retrying...")
+        out = run_model(prompt)
+        print(f"🔄 [ATTRIBUTES] Retry response received, parsing JSON...")
+    
+    if not out or out.strip() == "":
+        print(f"❌ [ATTRIBUTES] LLM returned empty response after retry, using fallback...")
+        # Return a fallback structure with entities from context
+        entities = base_mer.get("entities", [])
+        return {
+            "entities": entities,
+            "open_questions": [
+                {
+                    "question": "LLM returned empty response for attributes. Please review and add attributes manually.",
+                    "sources": ["system:llm_error"]
+                }
+            ]
+        }
+    
+    try:
+        result = json.loads(out)
+        print(f"🔄 [ATTRIBUTES] Attributes pass completed successfully")
+        return result
+    except json.JSONDecodeError as e:
+        print(f"❌ [ATTRIBUTES] JSON parsing error: {e}")
+        print(f"🔄 [ATTRIBUTES] LLM response was: {out[:200]}...")
+        # Return fallback structure
+        entities = base_mer.get("entities", [])
+        return {
+            "entities": entities,
+            "open_questions": [
+                {
+                    "question": f"LLM response parsing failed: {e}. Please review and add attributes manually.",
+                    "sources": ["system:json_error"]
+                }
+            ]
+        }

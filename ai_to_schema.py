@@ -10,9 +10,11 @@ from datetime import datetime
 from typing import Dict, Any
 
 from extractors.figma_ai_analyzer import FigmaAIAnalyzer
+from extractors.docs_mcp import DocumentsMCPClient
+from simple_figma_test import create_context_pack_from_figma_simple
 
-def convert_ai_analysis_to_context_pack(ai_analysis: Dict[str, Any]) -> Dict[str, Any]:
-    """Convert AI analysis format to context-pack format"""
+def convert_ai_analysis_to_context_pack(ai_analysis: Dict[str, Any], docs_context: Dict[str, Any] = None) -> Dict[str, Any]:
+    """Convert AI analysis format to context-pack format, optionally including documents context"""
     
     entity_cards = []
     connectors = []
@@ -45,6 +47,18 @@ def convert_ai_analysis_to_context_pack(ai_analysis: Dict[str, Any]) -> Dict[str
         }
         connectors.append(connector)
     
+    # Add connectors from documents if available
+    if docs_context:
+        for rule in docs_context.get("rules", []):
+            if rule.get("kind") == "cardinality" and rule.get("from") and rule.get("to"):
+                connector = {
+                    "from": rule["from"],
+                    "to": rule["to"],
+                    "label": _convert_relationship_type_to_label(rule.get("type", "many-to-one")),
+                    "sources": rule.get("sources", ["docs:business_rules"])
+                }
+                connectors.append(connector)
+    
     # Create context pack
     context_pack = {
         "figma": {
@@ -52,16 +66,19 @@ def convert_ai_analysis_to_context_pack(ai_analysis: Dict[str, Any]) -> Dict[str
             "connectors": connectors,
             "sources": ["figma:ai_analysis"]
         },
-        "documents": {
+        "documents": docs_context or {
             "glossary": [],
             "rules": [],
             "enums": []
         },
         "meta": {
-            "source": "figma_ai_analysis",
+            "source": "figma_ai_analysis_with_docs",
             "generated_at": datetime.now().isoformat() + "Z",
             "entities_count": len(entity_cards),
-            "relationships_count": len(connectors)
+            "relationships_count": len(connectors),
+            "docs_terms": len((docs_context or {}).get("glossary", [])),
+            "docs_rules": len((docs_context or {}).get("rules", [])),
+            "docs_enums": len((docs_context or {}).get("enums", []))
         }
     }
     
@@ -78,66 +95,86 @@ def _convert_relationship_type_to_label(rel_type: str) -> str:
     return mapping.get(rel_type, "1:N")
 
 def main():
-    """Generate complete schema from Figma using AI analysis"""
+    """Generate complete schema from Figma using AI analysis and documentation"""
     
-    print("🚀 Starting AI-powered Figma-to-Schema generation...")
+    print("🚀 Starting AI-powered Figma + Docs to Schema generation...")
     
-    # Step 1: Check if we have AI analysis, if not create it
+    # Step 1: Extract documentation context
+    print("\n📚 Step 1: Extracting documentation context...")
+    docs_dir = os.getenv("DOCS_RESOURCES_DIR", "./docs")
+    docs_client = DocumentsMCPClient(docs_dir)
+    docs_context = docs_client.extract_documents_context()
+    
+    print(f"✅ Documentation context extracted:")
+    print(f"   • Glossary terms: {len(docs_context['glossary'])}")
+    print(f"   • Business rules: {len(docs_context['rules'])}")  
+    print(f"   • Enums: {len(docs_context['enums'])}")
+    
+    # Step 2: Extract Figma data and create AI analysis
+    print("\n🎨 Step 2: Extracting and analyzing Figma data...")
     ai_analysis_path = "context/figma-ai-analysis.json"
     
-    if not os.path.exists(ai_analysis_path):
-        print("\n📋 Step 1: Creating AI analysis...")
+    try:
+        # Get Figma file ID from environment
+        figma_file_id = os.getenv("FIGMA_FILE_ID")
+        if not figma_file_id:
+            print("❌ FIGMA_FILE_ID not set in environment variables")
+            return
+        
+        print(f"🔍 Extracting data from Figma file: {figma_file_id}")
+        
+        # Extract raw Figma data via MCP
+        figma_raw_data = create_context_pack_from_figma_simple(figma_file_id)
+        
+        # Save raw data for debugging
+        os.makedirs("context", exist_ok=True)
+        with open("context/figma-mcp-raw-response.json", "w", encoding="utf-8") as f:
+            json.dump(figma_raw_data, f, indent=2, ensure_ascii=False)
+        
+        print("✅ Figma data extracted successfully")
+        
+        # Create AI analyzer and analyze the data
+        print("🤖 Analyzing Figma data with OpenAI...")
         analyzer = FigmaAIAnalyzer()
+        ai_analysis = analyzer.analyze_figma_data(figma_raw_data)
         
-        try:
-            # Load raw Figma data
-            with open("context/figma-mcp-raw-response.json", "r") as f:
-                figma_data = json.load(f)
-            
-            # Analyze with AI
-            ai_analysis = analyzer.analyze_figma_data(figma_data)
-            
-            # Save analysis
-            with open(ai_analysis_path, "w", encoding="utf-8") as f:
-                json.dump(ai_analysis, f, indent=2, ensure_ascii=False)
-            
-            print(f"✅ AI Analysis created:")
-            print(f"   • Entities: {len(ai_analysis.get('entities', []))}")
-            print(f"   • Relationships: {len(ai_analysis.get('relationships', []))}")
-            
-        except FileNotFoundError:
-            print("❌ No Figma data found. Run simple_figma_test.py first.")
-            return
-        except Exception as e:
-            print(f"❌ Error in AI analysis: {e}")
-            return
-    else:
-        print("\n📋 Step 1: Loading existing AI analysis...")
-        with open(ai_analysis_path, "r") as f:
-            ai_analysis = json.load(f)
+        # Save AI analysis
+        with open(ai_analysis_path, "w", encoding="utf-8") as f:
+            json.dump(ai_analysis, f, indent=2, ensure_ascii=False)
         
-        print(f"✅ AI Analysis loaded:")
+        print(f"✅ AI Analysis completed:")
         print(f"   • Entities: {len(ai_analysis.get('entities', []))}")
         print(f"   • Relationships: {len(ai_analysis.get('relationships', []))}")
+        
+    except Exception as e:
+        print(f"❌ Error in Figma extraction/analysis: {e}")
+        import traceback
+        traceback.print_exc()
+        return
     
-    # Step 2: Convert AI analysis to context pack format
-    print("\n📦 Step 2: Converting to context pack format...")
+    # Step 3: Convert to context pack format with documentation
+    print("\n📦 Step 3: Merging Figma + Documentation into context pack...")
     
-    context_pack = convert_ai_analysis_to_context_pack(ai_analysis)
+    context_pack = convert_ai_analysis_to_context_pack(ai_analysis, docs_context)
     
     # Save context pack
     context_pack_path = "context/context-pack.json"
     with open(context_pack_path, "w", encoding="utf-8") as f:
         json.dump(context_pack, f, indent=2, ensure_ascii=False)
-    
     print(f"✅ Context pack created:")
     print(f"   • Entity cards: {len(context_pack['figma']['entityCards'])}")
     print(f"   • Connectors: {len(context_pack['figma']['connectors'])}")
+    print(f"   • Documentation terms: {len(context_pack['documents']['glossary'])}")
+    print(f"   • Documentation rules: {len(context_pack['documents']['rules'])}")
+    print(f"   • Documentation enums: {len(context_pack['documents']['enums'])}")
     
-    # Step 3: Run complete pipeline
-    print("\n⚙️ Step 3: Running complete schema generation pipeline...")
+    # Step 4: Run complete pipeline
+    print("\n⚙️ Step 4: Running complete schema generation pipeline...")
     
     try:
+        # Ensure schema directory exists
+        os.makedirs("schema", exist_ok=True)
+        
         # Run pipeline using subprocess
         result = subprocess.run([
             "python", "-m", "pipeline.run_all", "mer", 
