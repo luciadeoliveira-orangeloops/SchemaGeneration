@@ -1,7 +1,140 @@
-from typing import Dict, Any, List
-from jinja2 import Template
+#!/usr/bin/env python3
+"""
+Convert MER JSON schema to Prisma schema
+"""
 
-DEFAULT_TEMPLATE = """// Generated from MER
+import json
+import sys
+import os
+from typing import Dict, Any, List
+
+
+def map_type(type_str: str) -> str:
+    """Map MER types to Prisma types"""
+    type_map = {
+        "string": "String",
+        "text": "String", 
+        "int": "Int",
+        "integer": "Int",
+        "bigint": "BigInt",
+        "float": "Float",
+        "decimal": "Decimal",
+        "boolean": "Boolean",
+        "bool": "Boolean",
+        "date": "DateTime",
+        "datetime": "DateTime",
+        "timestamp": "DateTime",
+        "uuid": "String",
+        "cuid": "String", 
+        "json": "Json",
+        "email": "String",
+        "url": "String",
+    }
+    return type_map.get(type_str.lower() if type_str else "string", "String")
+
+
+def generate_enums(enums: List[Dict]) -> str:
+    """Generate Prisma enums"""
+    if not enums:
+        return ""
+    
+    result = []
+    for enum in enums:
+        result.append(f"enum {enum['name']} {{")
+        for value in enum['values']:
+            # Clean up enum values for Prisma
+            clean_value = value.replace("-", "_").replace(" ", "_").upper()
+            result.append(f"  {clean_value}")
+        result.append("}")
+        result.append("")
+    
+    return "\n".join(result)
+
+
+def generate_models(entities: List[Dict], relationships: List[Dict]) -> str:
+    """Generate Prisma models from entities and relationships"""
+    result = []
+    
+    # Build relationship mapping
+    rel_map = {}
+    for rel in relationships:
+        from_entity = rel['from']
+        to_entity = rel['to']
+        fk_info = rel.get('fk', {})
+        
+        if from_entity not in rel_map:
+            rel_map[from_entity] = []
+        
+        rel_map[from_entity].append({
+            'to': to_entity,
+            'type': rel['type'],
+            'fk_attribute': fk_info.get('attribute', f"{to_entity.lower()}Id"),
+            'ref_field': fk_info.get('ref', 'User.id').split('.')[-1]
+        })
+    
+    for entity in entities:
+        name = entity['name']
+        result.append(f"model {name} {{")
+        
+        # Add attributes
+        for attr in entity.get('attributes', []):
+            attr_name = attr['name']
+            attr_type = map_type(attr.get('type', 'string'))
+            
+            # Handle nullable
+            if attr.get('nullable', False):
+                attr_type += "?"
+            
+            # Build decorators
+            decorators = []
+            if attr.get('pk', False):
+                decorators.append("@id")
+            if attr.get('unique', False):
+                decorators.append("@unique")
+            if attr.get('default'):
+                decorators.append(f"@default({attr['default']})")
+            
+            decorator_str = " " + " ".join(decorators) if decorators else ""
+            result.append(f"  {attr_name} {attr_type}{decorator_str}")
+        
+        # Add relationships
+        if name in rel_map:
+            for rel in rel_map[name]:
+                to_entity = rel['to']
+                fk_attr = rel['fk_attribute']
+                ref_field = rel['ref_field']
+                
+                # Add the relation field
+                relation_name = to_entity.lower()
+                result.append(f"  {relation_name} {to_entity} @relation(fields: [{fk_attr}], references: [{ref_field}])")
+                
+                # Add the foreign key field if not already present
+                fk_exists = any(attr['name'] == fk_attr for attr in entity.get('attributes', []))
+                if not fk_exists:
+                    result.append(f"  {fk_attr} String")
+        
+        # Add reverse relationships (one-to-many)
+        for other_entity in entities:
+            if other_entity['name'] in rel_map:
+                for rel in rel_map[other_entity['name']]:
+                    if rel['to'] == name:
+                        # This entity is referenced by other_entity
+                        reverse_field = f"{other_entity['name'].lower()}s"
+                        result.append(f"  {reverse_field} {other_entity['name']}[]")
+        
+        result.append("}")
+        result.append("")
+    
+    return "\n".join(result)
+
+
+def mer_to_prisma(mer_data: Dict[str, Any]) -> str:
+    """Convert MER data to Prisma schema"""
+    
+    schema_parts = []
+    
+    # Header
+    schema_parts.append("""// Generated from MER schema
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
@@ -11,112 +144,61 @@ generator client {
   provider = "prisma-client-js"
 }
 
-{% for enum in enums %}
-enum {{ enum.name }} {
-{% for v in enum.values %}
-  {{ v | replace("-", "_") | replace(" ", "_") }}
-{% endfor %}
-}
-{% endfor %}
-
-{% for m in models %}
-model {{ m.name }} {
-{% for a in m.attributes %}
-  {{ a.name }} {{ a.type }}{{ "?" if a.nullable else "" }}{{ " @id" if a.pk else "" }}{{ " @unique" if a.unique else "" }}{{ a.default or "" }}
-{% endfor %}
-{% for r in m.relations %}
-  {{ r.field }} {{ r.type }} @relation(fields: [{{ r.fk_field }}], references: [{{ r.ref_field }}])
-  {{ r.fk_field }} {{ r.fk_type }}
-{% endfor %}
-}
-{% endfor %}
-"""
-
-def map_type(t: str) -> str:
-    t = (t or "string").lower()
-    return {
-        "string":"String",
-        "text":"String",
-        "int":"Int",
-        "bigint":"BigInt",
-        "float":"Float",
-        "decimal":"Decimal",
-        "boolean":"Boolean",
-        "date":"DateTime",
-        "datetime":"DateTime",
-        "uuid":"String",
-        "cuid":"String",
-        "json":"Json",
-        "email":"String",
-        "url":"String",
-    }.get(t, "String")
-
-def mer_to_prisma(mer: Dict[str, Any]) -> str:
+""")
+    
     # Enums
-    enums = mer.get("enums", [])
+    enums = mer_data.get('enums', [])
+    if enums:
+        enum_schema = generate_enums(enums)
+        schema_parts.append(enum_schema)
+    
+    # Models
+    entities = mer_data.get('entities', [])
+    relationships = mer_data.get('relationships', [])
+    
+    if entities:
+        models_schema = generate_models(entities, relationships)
+        schema_parts.append(models_schema)
+    
+    return "".join(schema_parts)
 
-    # Base models
-    models = []
-    entity_index = {e["name"]: e for e in mer.get("entities", [])}
 
-    # Build base attributes
-    for e in mer.get("entities", []):
-        attrs = []
-        for a in e.get("attributes", []):
-            default = ""
-            if a.get("default"):
-                # Very simple, can be extended with uuid() etc.
-                default = f' @default({a["default"]})'
-            attrs.append({
-                "name": a["name"],
-                "type": map_type(a.get("type")),
-                "nullable": bool(a.get("nullable")),
-                "pk": bool(a.get("pk")),
-                "unique": bool(a.get("unique")),
-                "default": default,
-            })
-        models.append({"name": e["name"], "attributes": attrs, "relations": []})
+def main():
+    """Main function to convert MER to Prisma schema"""
+    
+    # Load MER schema
+    mer_file = "schema/mer.json"
+    if not os.path.exists(mer_file):
+        print(f"❌ Error: {mer_file} not found")
+        sys.exit(1)
+    
+    try:
+        with open(mer_file, 'r') as f:
+            mer_data = json.load(f)
+    except Exception as e:
+        print(f"❌ Error reading {mer_file}: {e}")
+        sys.exit(1)
+    
+    # Generate Prisma schema
+    try:
+        prisma_schema = mer_to_prisma(mer_data)
+    except Exception as e:
+        print(f"❌ Error generating Prisma schema: {e}")
+        sys.exit(1)
+    
+    # Save Prisma schema
+    output_file = "schema/schema.prisma"
+    os.makedirs("schema", exist_ok=True)
+    
+    try:
+        with open(output_file, 'w') as f:
+            f.write(prisma_schema)
+        print(f"✅ Prisma schema generated successfully!")
+        print(f"📄 Saved to: {output_file}")
+    except Exception as e:
+        print(f"❌ Error saving {output_file}: {e}")
+        sys.exit(1)
 
-    # Relationships (one-to-many / many-to-one)
-    # N:M: for now, expected as explicit bridge table in the MER
-    models_by_name = {m["name"]: m for m in models}
 
-    for rel in mer.get("relationships", []):
-        typ = rel.get("type", "many-to-one")
-        src = rel.get("from"); dst = rel.get("to")
-        fk = rel.get("fk", {})
-        fk_attr = fk.get("attribute", f"{dst[0].lower()}{dst[1:]}Id")
-        ref = fk.get("ref", "id")
-        ref_entity, ref_field = (ref.split(".") + ["id"])[:2]
-
-        # FK types
-        ref_e = entity_index.get(ref_entity, {})
-        ref_attr = next((a for a in ref_e.get("attributes", []) if a.get("name")==ref_field), None)
-        fk_type = map_type(ref_attr.get("type") if ref_attr else "string")
-
-        # MANY side (src) → add fk + relation
-        if typ in ("many-to-one", "one-to-many"):
-            m_src = models_by_name[src]
-            m_src["relations"].append({
-                "field": dst[0].lower()+dst[1:],  # user
-                "type": dst,
-                "fk_field": fk_attr,
-                "ref_field": ref_field,
-                "fk_type": fk_type
-            })
-            # ONE side (dst) → list
-            m_dst = models_by_name[dst]
-            # Add list field only if it doesn't exist
-            list_field = src[0].lower()+src[1:]+"s"
-            if not any(a.get("name")==list_field for a in m_dst["attributes"]):
-                m_dst["attributes"].append({
-                    "name": list_field,
-                    "type": f"{src}[]",
-                    "nullable": False,
-                    "pk": False,
-                    "unique": False,
-                    "default": ""
-                })
-
-    tmpl = Template(DEFAULT_TEMPLATE)
-    return tmpl.render(models=models, enums=enums)
+if __name__ == "__main__":
+    main()
