@@ -14,9 +14,16 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 from llm.openai_client import OpenAIClient
 
 
-def map_type_with_db_constraints(type_str: str, attr_name: str = "", context: Dict = None) -> Dict[str, str]:
+def map_type_with_db_constraints(type_str: str, attr_name: str = "", context: Dict = None, enums: List[Dict] = None) -> Dict[str, str]:
     """Map MER types to Prisma types with proper database constraints"""
     context = context or {}
+    enums = enums or []
+    
+    # Check if this is an enum type
+    enum_names = [enum['name'] for enum in enums]
+    if type_str in enum_names:
+        # For enum types, don't add database constraints - Prisma handles this automatically
+        return {"type": type_str, "db": ""}
     
     type_mapping = {
         "string": {"type": "String", "db": "@db.VarChar(255)"},
@@ -218,9 +225,10 @@ def generate_enums(enums: List[Dict]) -> str:
     return "\n".join(result)
 
 
-def generate_models(entities: List[Dict], relationships: List[Dict]) -> str:
+def generate_models(entities: List[Dict], relationships: List[Dict], enums: List[Dict] = None) -> str:
     """Generate Prisma models from entities and relationships with enhanced formatting"""
     result = []
+    enums = enums or []
     
     # Build relationship mapping
     rel_map = {}
@@ -239,6 +247,22 @@ def generate_models(entities: List[Dict], relationships: List[Dict]) -> str:
             'ref_field': fk_info.get('ref', 'User.id').split('.')[-1]
         })
     
+    # Create enum value mapping for defaults
+    enum_defaults = {}
+    for enum in enums:
+        enum_name = enum['name']
+        values = enum.get('values', [])
+        if values:
+            # Convert to proper enum format and pick a sensible default
+            enhanced_values = enhance_enum_values(values)
+            if enum_name == 'ProjectPriority' and 'MEDIUM' in enhanced_values:
+                default_value = 'MEDIUM'
+            elif enum_name == 'UserRole' and 'USER' in enhanced_values:
+                default_value = 'USER'
+            else:
+                default_value = enhanced_values[0]  # First value as default
+            enum_defaults[enum_name] = default_value
+    
     for entity in entities:
         name = entity['name']
         result.append(f"model {name} {{")
@@ -246,7 +270,7 @@ def generate_models(entities: List[Dict], relationships: List[Dict]) -> str:
         # Add regular attributes
         for attr in entity.get('attributes', []):
             attr_name = attr['name']
-            type_info = map_type_with_db_constraints(attr.get('type', 'string'), attr_name)
+            type_info = map_type_with_db_constraints(attr.get('type', 'string'), attr_name, enums=enums)
             attr_type = type_info['type']
             db_constraint = type_info['db']
             
@@ -267,13 +291,17 @@ def generate_models(entities: List[Dict], relationships: List[Dict]) -> str:
                     decorators.append(f"@default({default_val})")
                 else:
                     decorators.append(f'@default("{default_val}")')
+            elif attr_type in enum_defaults and not attr.get('pk', False):
+                # Add default value for enum types
+                default_enum_val = enum_defaults[attr_type]
+                decorators.append(f"@default({default_enum_val})")
             
             # Add field mapping
             snake_name = to_snake_case(attr_name)
             if snake_name != attr_name.lower():
                 decorators.append(f'@map("{snake_name}")')
             
-            # Add database constraint
+            # Add database constraint (but not for enums)
             if db_constraint:
                 decorators.append(db_constraint)
             
@@ -387,7 +415,7 @@ generator dbml {
     relationships = mer_data.get('relationships', [])
     
     if entities:
-        models_schema = generate_models(entities, relationships)
+        models_schema = generate_models(entities, relationships, enums)
         schema_parts.append(models_schema)
     
     base_schema = "".join(schema_parts)
@@ -402,7 +430,8 @@ generator dbml {
 def main():
     """Main function to convert MER to Prisma schema"""
     
-    # Check command line arguments for AI flag
+    # Parse command line arguments
+    args = [arg for arg in sys.argv[1:] if not arg.startswith('--')]
     use_ai = "--no-ai" not in sys.argv
     
     if use_ai:
@@ -410,8 +439,20 @@ def main():
     else:
         print("⚙️ Using rule-based generation only")
     
-    # Load MER schema
-    mer_file = "schema/mer.json"
+    # Determine input and output files
+    if len(args) >= 1:
+        mer_file = args[0]
+    else:
+        mer_file = "schema/mer.json"
+        
+    if len(args) >= 2:
+        output_file = args[1]
+    else:
+        output_file = "schema/schema.prisma"
+    
+    print(f"📖 Input MER file: {mer_file}")
+    print(f"💾 Output Prisma file: {output_file}")
+    
     if not os.path.exists(mer_file):
         print(f"❌ Error: {mer_file} not found")
         sys.exit(1)
@@ -431,8 +472,7 @@ def main():
         sys.exit(1)
     
     # Save Prisma schema
-    output_file = "schema/schema.prisma"
-    os.makedirs("schema", exist_ok=True)
+    os.makedirs(os.path.dirname(output_file), exist_ok=True)
     
     try:
         with open(output_file, 'w') as f:
