@@ -121,58 +121,170 @@ def enhance_enum_values(enum_values: List[str]) -> List[str]:
 
 
 def enhance_schema_with_ai(mer_data: Dict[str, Any], base_schema: str) -> str:
-    """Use AI to enhance the Prisma schema with best practices and improvements"""
+    """Use AI to enhance the Prisma schema following the exact template format provided"""
     
     try:
         llm = OpenAIClient()
         
-        prompt = f"""You are a Prisma schema expert. I have a base Prisma schema generated from a MER model, but I want you to enhance it with best practices, proper constraints, and professional formatting.
+        # Define the exact template format
+        template_schema = '''datasource db {
+  provider = "postgresql"
+  url      = env("DB_CONNECTION_URL")
+}
 
-Here's the original MER data for context:
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+
+  previewFeatures = ["views", "relationJoins"]
+  binaryTargets   = ["native"]
+
+  runtime = "nodejs" // nodejs (alias node), edge-light (alias vercel), react-native
+}
+
+generator dbml {
+  provider = "prisma-dbml-generator"
+}
+
+enum UserStatus {
+  BLOCKED
+  PENDING
+  ACTIVE
+}
+
+enum UserRole {
+  BASIC
+  TRUSTED
+  ADMINISTRATOR
+}
+
+model User {
+  id        String  @id @default(uuid()) @db.Uuid
+  firstName String? @map("first_name") @db.VarChar(255)
+  lastName  String? @map("last_name") @db.VarChar(255)
+  email     String  @unique @map("email") @db.VarChar(255)
+
+  status UserStatus @default(ACTIVE)
+  role   UserRole   @default(BASIC) @map("role")
+
+  password String
+
+  userRefreshToken UserRefreshToken[]
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("user")
+}
+
+model UserRefreshToken {
+  id      String   @id @default(uuid()) @db.Uuid
+  userId  String   @map("user_id") @db.Uuid
+  token   String
+  enabled Boolean? @default(true)
+
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@map("user_refresh_token")
+}
+
+enum FileStatus {
+  PENDING_UPLOAD
+  READY
+  INVALID
+}
+
+enum FileType {
+  OTHER
+}
+
+model File {
+  id          String     @id @default(uuid())
+  path        String     @db.VarChar(255)
+  name        String     @db.VarChar(255)
+  isPrivate   Boolean    @default(false) @map("is_private")
+  status      FileStatus @default(PENDING_UPLOAD)
+  type        FileType   @default(OTHER)
+  extension   String?    @db.VarChar(255)
+  contentType String?    @map("content_type") @db.VarChar(255)
+  size        Int?
+  notes       String?
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("file")
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model Task {
+  id String @id @default(uuid())
+
+  title       String
+  description String?
+  completed   Boolean      @default(false)
+  dueDate     DateTime?    @map("due_date")
+  priority    TaskPriority @default(MEDIUM)
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("task")
+}'''
+        
+        prompt = f"""You are a Prisma schema expert. I need you to generate a Prisma schema based on MER data, but following EXACTLY the format and style of the provided template.
+
+Here's the MER data to process:
 ```json
 {json.dumps(mer_data, indent=2)}
 ```
 
-Here's the base Prisma schema:
+Here's the EXACT template format you MUST follow as STYLE REFERENCE:
 ```prisma
-{base_schema}
+{template_schema}
 ```
 
-Please enhance this schema following these guidelines:
+CRITICAL REQUIREMENTS:
 
-1. **Field Types & Constraints**: 
-   - Use appropriate database types (@db.VarChar with proper lengths, @db.Text for long content, @db.Uuid for IDs)
-   - Add proper constraints based on field names and context
-   - Email fields should be @db.VarChar(255) with validation
-   - Names should be @db.VarChar(255)
-   - Descriptions should be @db.Text
+1. **PRESERVE EXACTLY**: Keep User and UserRefreshToken models EXACTLY as shown in the template. Only ADD new fields if they appear in the MER data for these entities, but maintain the existing format, order, and style.
 
-2. **Standard Fields**: Every model should have:
-   - createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-   - updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(6)  
-   - deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+2. **DO NOT INCLUDE**: File and Task models from the template. These are ONLY style examples. Do not include them in the final schema.
 
-3. **IDs**: All primary keys should be:
-   - String @id @default(uuid()) @db.Uuid
+3. **Template Format**: Follow the exact same formatting style, spacing, and structure as the template for all new models and enums.
 
-4. **Field Mapping**: Convert camelCase to snake_case with @map():
-   - userId -> @map("user_id")
-   - firstName -> @map("first_name")
+4. **Enum Format**: 
+   - Values in UPPER_SNAKE_CASE
+   - No @db annotations on enum types
+   - Default values like @default(ACTIVE)
+   - Only include UserStatus and UserRole enums from template, plus any new enums from MER data
 
-5. **Table Mapping**: All models should have @@map("table_name") in snake_case
+5. **Model Format**:
+   - IDs: String @id @default(uuid()) @db.Uuid (except when specific @db.Uuid is not needed)
+   - String fields: @db.VarChar(255) for names, emails, etc.
+   - Text fields: No @db annotation (let Prisma handle)
+   - Field mapping: @map("snake_case")
+   - Table mapping: @@map("snake_case")
+   - Standard timestamps: createdAt, updatedAt, deletedAt with exact format from template
 
-6. **Enums**: Values should be UPPER_SNAKE_CASE
+6. **Relationships**: Use the same style as the UserRefreshToken example.
 
-7. **Relationships**: 
-   - Foreign keys should be String @db.Uuid
-   - Proper @relation() declarations
-   - Include reverse relationships
+7. **Generate new models/enums** that appear in the MER data but are not User or UserRefreshToken.
 
-8. **Defaults**: Add sensible defaults where appropriate
+8. **Final structure**: datasource, generators, UserStatus, UserRole, User, UserRefreshToken, then any new enums and models from MER data.
 
-9. **Comments**: Add helpful comments for complex relationships
-
-Please return ONLY the enhanced Prisma schema, nothing else. Make sure it's valid Prisma syntax.
+Please return ONLY the complete Prisma schema following this exact template format, but WITHOUT File and Task models.
 """
 
         print("🤖 Enhancing Prisma schema with AI...")
@@ -377,13 +489,18 @@ def generate_models(entities: List[Dict], relationships: List[Dict], enums: List
 
 
 def mer_to_prisma(mer_data: Dict[str, Any], use_ai: bool = True) -> str:
-    """Convert MER data to Prisma schema with professional formatting and AI enhancement"""
+    """Convert MER data to Prisma schema using template format and AI enhancement"""
     
-    schema_parts = []
-    
-    # Header with professional configuration
-    schema_parts.append("""// Generated from MER schema
-datasource db {
+    # Use AI enhancement by default since we want to follow the exact template
+    if use_ai:
+        # Pass empty base schema since AI will use the embedded template
+        return enhance_schema_with_ai(mer_data, "")
+    else:
+        # If AI is disabled, create a basic schema following template format
+        schema_parts = []
+        
+        # Header with template configuration
+        schema_parts.append("""datasource db {
   provider = "postgresql"
   url      = env("DB_CONNECTION_URL")
 }
@@ -395,7 +512,7 @@ generator client {
   previewFeatures = ["views", "relationJoins"]
   binaryTargets   = ["native"]
 
-  runtime = "nodejs"
+  runtime = "nodejs" // nodejs (alias node), edge-light (alias vercel), react-native
 }
 
 generator dbml {
@@ -403,28 +520,70 @@ generator dbml {
 }
 
 """)
-    
-    # Enums
-    enums = mer_data.get('enums', [])
-    if enums:
-        enum_schema = generate_enums(enums)
-        schema_parts.append(enum_schema)
-    
-    # Models
-    entities = mer_data.get('entities', [])
-    relationships = mer_data.get('relationships', [])
-    
-    if entities:
-        models_schema = generate_models(entities, relationships, enums)
-        schema_parts.append(models_schema)
-    
-    base_schema = "".join(schema_parts)
-    
-    # Enhance with AI if requested
-    if use_ai:
-        return enhance_schema_with_ai(mer_data, base_schema)
-    else:
-        return base_schema
+        
+        # Include only the essential base enums and models (no File/Task)
+        base_template = '''enum UserStatus {
+  BLOCKED
+  PENDING
+  ACTIVE
+}
+
+enum UserRole {
+  BASIC
+  TRUSTED
+  ADMINISTRATOR
+}
+
+model User {
+  id        String  @id @default(uuid()) @db.Uuid
+  firstName String? @map("first_name") @db.VarChar(255)
+  lastName  String? @map("last_name") @db.VarChar(255)
+  email     String  @unique @map("email") @db.VarChar(255)
+
+  status UserStatus @default(ACTIVE)
+  role   UserRole   @default(BASIC) @map("role")
+
+  password String
+
+  userRefreshToken UserRefreshToken[]
+
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  @@map("user")
+}
+
+model UserRefreshToken {
+  id      String   @id @default(uuid()) @db.Uuid
+  userId  String   @map("user_id") @db.Uuid
+  token   String
+  enabled Boolean? @default(true)
+
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  @@map("user_refresh_token")
+}
+
+'''
+        
+        schema_parts.append(base_template)
+        
+        # Add any additional models from MER that aren't in the base template
+        entities = mer_data.get('entities', [])
+        template_models = ['User', 'UserRefreshToken']  # Only these are preserved
+        
+        for entity in entities:
+            if entity['name'] not in template_models:
+                # Generate additional models following template style
+                models_schema = generate_models([entity], mer_data.get('relationships', []), mer_data.get('enums', []))
+                schema_parts.append(models_schema)
+        
+        return "".join(schema_parts)
 
 
 def main():
