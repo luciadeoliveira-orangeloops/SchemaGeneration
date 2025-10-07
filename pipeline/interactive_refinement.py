@@ -369,16 +369,24 @@ def parse_markdown_answers(markdown_file: str) -> List[Dict[str, str]]:
     
     answered_questions = []
     
-    # Parse questions and answers using regex
-    pattern = r'## Question (\d+)\s*\n\*\*Q:\*\* (.+?)\n\*\*Your Answer:\*\*\s*\n```\s*\n(.*?)\n```'
-    matches = re.findall(pattern, content, re.DOTALL)
+    # Parse questions and answers using regex - handle both formats
+    # Format 1: ### Question 1 (from answered section)
+    pattern1 = r'### Question (\d+)\s*\n\*\*Q:\*\* (.+?)\n\*\*Your Answer:\*\*\s*\n```\s*\n(.*?)\n```'
+    matches1 = re.findall(pattern1, content, re.DOTALL)
     
-    for match in matches:
+    # Format 2: ### Pending Question 1 (from pending section)
+    pattern2 = r'### Pending Question (\d+)\s*\n\*\*Q:\*\* (.+?)\n\*\*Your Answer:\*\*\s*\n```\s*\n(.*?)\n```'
+    matches2 = re.findall(pattern2, content, re.DOTALL)
+    
+    # Combine all matches
+    all_matches = matches1 + matches2
+    
+    for match in all_matches:
         question_num, question, answer = match
         answer = answer.strip()
         
-        # Skip empty answers or those marked as SKIP
-        if answer and answer.upper() not in ['SKIP', '[WRITE YOUR ANSWER HERE]', '']:
+        # Skip empty answers or placeholder text
+        if answer and answer.upper() not in ['SKIP', '[WRITE YOUR ANSWER HERE]', '[WRITE YOUR ANSWER HERE OR LEAVE BLANK TO SKIP]', '']:
             answered_questions.append({
                 "question": question.strip(),
                 "answer": answer
