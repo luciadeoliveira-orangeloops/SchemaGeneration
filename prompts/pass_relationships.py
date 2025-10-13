@@ -29,32 +29,16 @@ INSTRUCTIONS FOR OPEN_QUESTIONS:
 Analyze the entities and domain to generate SPECIFIC relationship and schema questions:
 
 1. MISSING RELATIONSHIPS: Based on the domain logic, ask:
-   - "Should there be a relationship between Project and Session (e.g., tracking which projects are accessed in each session)?"
-   - "Do we need a many-to-many relationship for Project collaborators/team members?"
-   - "Should there be self-referencing relationships (e.g., User manager, Project parent/child)?"
 
 2. CARDINALITY QUESTIONS: When relationships are unclear, ask:
-   - "Can a Project have multiple owners/managers, or just one User?"
-   - "Should Session be one-per-user or allow multiple concurrent sessions?"
-   - "Are Projects shared between Users or strictly owned by one User?"
 
 3. BUSINESS LOGIC GAPS: Based on the application context, ask:
-   - "Should we track Project history/versions with a separate entity?"
-   - "Do we need audit trails (who created/modified what and when)?"
-   - "Should there be categories/tags for Projects with their own entities?"
 
 4. DATA CONSISTENCY: Ask about referential integrity:
-   - "What happens to Projects when a User is deleted - cascade or orphan?"
-   - "Should Sessions automatically expire or require manual cleanup?"
-   - "Do we need soft deletes for any entities?"
 
 5. DOMAIN-SPECIFIC RELATIONSHIPS: Based on the specific application:
-   - For project management: "Should we add Task/Milestone entities related to Projects?"
-   - For collaboration: "Do we need Comment/Activity entities linked to Projects?"
-   - For permissions: "Should we add Role/Permission entities with User relationships?"
 
 6. OVERALL SCHEMA VALIDATION: Always include this general question:
-   - "Should we add something to the schema or are there any changes you would want to do?"
 
 DO NOT use only generic questions. Generate 4-6 SPECIFIC questions based on actual domain analysis.
 

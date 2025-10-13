@@ -31,7 +31,6 @@ Analyze the entities and context pack to generate SPECIFIC attribute-related que
 1. MISSING CRITICAL ATTRIBUTES: Based on the domain and UI, ask about essential fields:
    - "Should User have a 'role' or 'permissions' attribute for access control?"
    - "Does Project need 'status', 'priority', or 'deadline' attributes?"
-   - "Should we track 'lastLoginAt' or 'isActive' for User sessions?"
 
 2. DATA TYPE CONCERNS: When types are ambiguous, ask:
    - "Should 'priority' be an enum (low/medium/high) or integer (1-10)?"

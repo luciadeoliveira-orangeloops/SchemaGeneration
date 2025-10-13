@@ -32,7 +32,6 @@ Analyze the context pack and generate SPECIFIC questions based on what you obser
    - "Is there a 'Team' or 'Organization' entity missing for multi-user scenarios?"
 
 3. UNCLEAR SCOPE: If entity boundaries are unclear, ask:
-   - "Should 'Session' include authentication tokens or just login tracking?"
    - "Does 'Project' include financial/billing information or just metadata?"
 
 4. DOMAIN-SPECIFIC CONCERNS: Based on the specific application context, ask relevant questions:

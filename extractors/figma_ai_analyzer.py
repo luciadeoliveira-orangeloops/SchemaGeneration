@@ -80,7 +80,6 @@ ANALYSIS INSTRUCTIONS:
 4. Focus on common application entities:
    - User (with login, registration, password reset)
    - Project (suggested by "Proyectos")
-   - Session (for login management)
    - Any other entities suggested by the component names
 
 RESPONSE FORMAT:

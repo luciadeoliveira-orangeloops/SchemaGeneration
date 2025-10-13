@@ -104,63 +104,6 @@ def extract_questions_from_schema(schema: Dict[str, Any]) -> List[str]:
     
     # Generate intelligent questions based on schema structure
     generated_questions = []
-    entities = schema.get('entities', [])
-    relationships = schema.get('relationships', [])
-    enums = schema.get('enums', [])
-    
-    # Questions about missing common attributes
-    for entity in entities:
-        name = entity.get('name', '')
-        attrs = entity.get('attributes', [])
-        attr_names = [attr.get('name', '') for attr in attrs]
-        
-        # Check for common missing attributes
-        if name.lower() == 'user' and 'created_at' not in attr_names:
-            generated_questions.append(f"Should the {name} entity have timestamp fields like created_at and updated_at?")
-        
-        if name.lower() == 'user' and 'role' not in attr_names and 'status' not in attr_names:
-            generated_questions.append(f"Should the {name} entity have a role or status field for access control?")
-        
-        if name.lower() == 'project' and 'status' not in attr_names:
-            generated_questions.append(f"Should the {name} entity have a status field (active, completed, archived)?")
-        
-        if name.lower() == 'session' and 'created_at' not in attr_names:
-            generated_questions.append(f"Should the {name} entity track creation time for security auditing?")
-    
-    # Questions about potential missing relationships
-    entity_names = [e.get('name', '') for e in entities]
-    relationship_pairs = set()
-    for rel in relationships:
-        from_entity = rel.get('from', '')
-        to_entity = rel.get('to', '')
-        relationship_pairs.add(f"{from_entity}-{to_entity}")
-        relationship_pairs.add(f"{to_entity}-{from_entity}")
-    
-    # Check for Project-Session relationship
-    if 'Project' in entity_names and 'Session' in entity_names:
-        if 'Project-Session' not in relationship_pairs:
-            generated_questions.append("Should there be a relationship between Project and Session (e.g., tracking which project was accessed in each session)?")
-    
-    # Questions about enums usage
-    if enums:
-        enum_names = [e.get('name', '') for e in enums]
-        if 'UserRole' in enum_names:
-            user_attrs = []
-            for entity in entities:
-                if entity.get('name', '').lower() == 'user':
-                    user_attrs = [attr.get('name', '') for attr in entity.get('attributes', [])]
-                    break
-            if 'role' not in user_attrs:
-                generated_questions.append("Should the User entity use the UserRole enum that was defined?")
-        
-        if 'ProjectPriority' in enum_names:
-            project_attrs = []
-            for entity in entities:
-                if entity.get('name', '').lower() == 'project':
-                    project_attrs = [attr.get('name', '') for attr in entity.get('attributes', [])]
-                    break
-            if 'priority' not in project_attrs:
-                generated_questions.append("Should the Project entity use the ProjectPriority enum that was defined?")
     
     # General schema improvement questions
     generated_questions.extend([
